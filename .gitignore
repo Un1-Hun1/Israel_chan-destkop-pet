@@ -1,0 +1,12 @@
+# personal settings and logs
+config.json
+errors.log
+
+# reference art by other people — not ours to publish
+reference/
+
+# build output
+build/
+dist/
+*.spec
+__pycache__/
