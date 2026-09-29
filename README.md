@@ -1,70 +1,78 @@
 # Momo, Israel-chan desktop pet
 
-Маленькая пиксельная девочка, которая живёт на рабочем столе. Ходит по окнам, иногда улетает на ракете и спускается обратно на парашюте. Ещё она болтает, в основном на иврите, но иногда и по-русски.
+A small pixel girl who lives on your Windows desktop. She walks along the tops of your windows, every now and then takes off on a rocket, and floats back down on a parachute. She also talks, in Russian, English or Hebrew, whichever you pick.
 
-Сделал для себя, но вдруг кому-то тоже зайдёт.
+I made her for myself, but maybe someone else will like her too.
 
 ![demo](docs/demo.gif)
 
 ![sprites](docs/preview.png)
 
-## Скачать
+## Download
 
-[MomoPet.exe](https://github.com/Un1-Hun1/Israel_chan-destkop-pet/releases/latest/download/MomoPet.exe) (последняя версия, один файл, ставить ничего не надо)
+[MomoPet.exe](https://github.com/Un1-Hun1/Israel_chan-destkop-pet/releases/latest/download/MomoPet.exe) (latest version, a single file, nothing to install)
 
-Кидаешь его в любую папку и запускаешь. Windows скорее всего напишет «Windows защитила ваш компьютер», потому что у программы нет платной подписи. Жми «Подробнее» и «Выполнить в любом случае».
+Put it in any folder and run it. Windows will probably say "Windows protected your PC" because the app isn't signed (signing costs money). Click "More info" and then "Run anyway".
 
-## Что она делает
+## First launch
 
-Гуляет по панели задач и по верхним краям окон. Может сесть на окно и болтать ногами, а если это окно двигать, она поедет вместе с ним. Закроешь окно, и она упадёт.
+On the first launch a settings window pops up where you choose:
 
-Где-то раз в полминуты садится на ракету и летает по экрану, потом спрыгивает и планирует вниз на парашюте.
+- the language she speaks (Russian, English or Hebrew; she only uses the one you pick, and the settings window switches too)
+- how often she talks and how often she goes for a rocket ride
+- walking speed and size
+- whether she jumps onto windows, falls asleep, hides during fullscreen games and videos
+- whether she starts with Windows and whether the desktop widget is shown
 
-Над головой периодически появляется облачко с фразой. Фразы на иврите идут с переводом.
+![settings](docs/settings.png)
 
-Её можно взять мышкой и швырнуть, можно кликнуть (ей нравится). Если долго ничего не происходит, она засыпает. Когда открыта игра или видео на весь экран, она прячется, чтобы не мешать.
+You can open the same window later by clicking her face on the desktop widget, or by launching the exe again.
 
-## Управление
+## What she does
 
-На рабочем столе появляется небольшой виджет. Клик по нему включает и выключает Момо, перетаскивать его тоже можно. По правому клику на виджете есть меню: позвать её к виджету, поменять размер, включить автозапуск вместе с Windows, выйти.
+She walks on the taskbar and on the top edges of windows. She can sit on a window and swing her legs; drag that window around and she rides along with it. Close it and she falls.
 
-Правый клик по самой Момо: погладить, попросить что-нибудь сказать, отправить полетать на ракете.
+Every so often she hops on a rocket and flies around the screen, then bails out and drifts down on a parachute.
 
-Повторный запуск exe тоже включает и выключает её.
+A thought bubble pops up above her head from time to time.
 
-## Свои фразы
+You can grab her with the mouse and throw her, or click her (she likes that). If nothing happens for a while she dozes off.
 
-После первого запуска рядом с exe появится `phrases.txt`. Открываешь Блокнотом и дописываешь что хочешь, одна строка на фразу. Через `|` можно сделать перенос строки, я так пишу перевод под ивритом:
+## Controls
+
+The small widget on the desktop turns her on and off. Click her face on it to open the settings. Right-click the widget for a menu: settings, call her over to the widget, quit.
+
+Right-click Momo herself to pat her, ask her to say something, send her off on the rocket, or hide her.
+
+## Your own phrases
+
+After the first launch a `phrases` folder appears next to the exe with `ru.txt`, `en.txt` and `he.txt`. Open the one for your language in Notepad and add whatever you want, one phrase per line. A `|` breaks the line in two.
 
 ```
-[hebrew]
-מה נשמע? | Как дела?
+[random]
+Did you remember to save your work?
 ```
 
-Перезапускать ничего не нужно, она подхватит новые фразы сама.
+No restart needed, she picks up new phrases on her own.
 
-## Если хочешь запустить из исходников
+## Running from source
 
-Нужен Python 3.11 или новее и Pillow:
+You need Python 3.11+ and Pillow:
 
 ```
 pip install pillow
 pythonw pixelpet.pyw
 ```
 
-Собрать exe самому:
+Building the exe:
 
 ```
 pip install pyinstaller
-python -m PyInstaller --onefile --noconsole --name MomoPet --icon icon.ico --add-data "phrases.txt;." pixelpet.pyw
+python -m PyInstaller --onefile --noconsole --name MomoPet --icon icon.ico --add-data "phrases;phrases" --add-data "icon.ico;." pixelpet.pyw
 ```
 
-## Прочее
+## Notes
 
-Все спрайты нарисованы вручную прямо в коде, лежат в `sprites.py`. Сам персонаж это фанатская отсылка к мемной Israel-chan, проект некоммерческий.
+All the sprites are drawn by hand in code, see `sprites.py`. The character is a fan nod to the Israel-chan meme; this is a non-commercial project.
 
-Лицензия MIT, делайте с кодом что хотите.
-
----
-
-*A small pixel girl that lives on your Windows desktop. She walks on your windows, flies around on a rocket, parachutes back down and talks (mostly in Hebrew). Grab the exe from Releases and run it.*
+MIT license, do whatever you want with the code.

@@ -1,0 +1,74 @@
+# Momo's English phrases. One line = one phrase, | starts a new line.
+# [random] - she says these on her own, [click] - when you click her,
+# [drag] - when you carry her, [wake] - when you wake her up, [land] - after a fall,
+# [rocket] - on takeoff, [parachute] - while parachuting.
+# Lines starting with # are ignored. Changes apply without a restart.
+
+[random]
+Shalom!
+Shabbat shalom!
+How's it going?
+Hummus is life.
+I could really go for some falafel...
+Forty tabs open again?
+Can I sit here?
+Do you ever take a break?
+Don't forget to drink some water.
+Mazel tov! No idea what for, but mazel tov!
+I'm not staring. I'm guarding.
+What are you doing? Show me!
+Go eat something, I'm worried about you.
+Bored... Open another window!
+This window is comfy. I'm taking it.
+Yalla, get back to work!
+I want shakshuka...
+I love you! A little bit.
+Cool.
+No way?
+Good job!
+Don't work too hard.
+Shh, I'm thinking...
+Seriously?
+You're the best!
+L'chaim!
+Good morning! Or evening. I don't look at clocks.
+Am Yisrael Chai!
+
+[click]
+Hey, no poking!
+Okay... that's nice.
+Hehe~
+Thanks!
+B-baka! Don't touch me!
+More! I mean... no!
+
+[drag]
+Aaah, put me down!
+Where are you taking me?!
+Let go of me!
+I'm not a sack of potatoes!
+
+[wake]
+Don't touch me, I'm sleeping...
+Five more minutes...
+Hmm... what? I wasn't sleeping!
+
+[land]
+Ouch! That hurt!
+Phew, I landed.
+Do that again and I'm mad at you!
+
+[rocket]
+Let's go!
+Wheee!
+Yalla, I'm flying!
+Hold on, I'm on a rocket!
+Iron Dome, please don't shoot me down!
+3, 2, 1... Liftoff!
+See you!
+
+[parachute]
+Come on, parachute, open!
+Hope I land on a window...
+This is so fun!
+Floating dooown... slowly...

@@ -1,7 +1,8 @@
 """PixelPet — a tiny pixel anime girl who lives on your Windows desktop.
 
-Run with pythonw.exe. A small widget on the desktop toggles her on/off;
-launching the script again while it is running toggles her too.
+Run with pythonw.exe. A small widget on the desktop toggles her on/off and
+opens the settings (click her face). A settings window appears on the first
+run; launching the app again while it is running opens it too.
 """
 import ctypes
 import ctypes.wintypes as wt
@@ -217,7 +218,97 @@ def foreground_is_fullscreen(mons):
 
 # --------------------------------------------------------------- config ---
 
-DEFAULT_CONFIG = {"pet_on": True, "widget_x": None, "widget_y": None, "size": 2.4}
+def system_language():
+    try:
+        primary = ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF
+    except Exception:
+        return "en"
+    return {0x19: "ru", 0x0D: "he"}.get(primary, "en")
+
+
+DEFAULT_CONFIG = {
+    "pet_on": True, "widget_x": None, "widget_y": None, "size": 2.4,
+    "language": None,        # filled from the Windows UI language on first run
+    "talk": "sometimes",     # never / rare / sometimes / often
+    "rocket": "sometimes",
+    "speed": "normal",       # slow / normal / fast
+    "jumps": True, "sleep": True, "hide_fullscreen": True, "show_widget": True,
+    "setup_done": False,
+}
+
+# timer ranges in ticks (~30 per second)
+TALK_TICKS = {"never": None, "rare": (1200, 2400), "sometimes": (450, 900), "often": (180, 420)}
+ROCKET_TICKS = {"never": None, "rare": (3600, 5400), "sometimes": (850, 1000), "often": (400, 550)}
+SPEEDS = {"slow": 0.35, "normal": 0.55, "fast": 0.85}
+SIZES = {"small": 1.6, "medium": 2.4, "large": 3.2}
+LANGUAGES = ("ru", "en", "he")
+
+UI = {
+    "ru": {
+        "name": "Момо", "title": "Настройки Момо", "off": "выключена",
+        "welcome": "Привет! Я Момо. Давай настроим меня под тебя.",
+        "hint": "Настройки открываются кликом по моему лицу в виджете или повторным запуском программы.",
+        "language": "Язык", "talk": "Как часто говорит", "rocket": "Полёты на ракете",
+        "speed": "Скорость ходьбы", "size": "Размер",
+        "never": "Никогда", "rare": "Редко", "sometimes": "Иногда", "often": "Часто",
+        "slow": "Медленно", "normal": "Обычно", "fast": "Быстро",
+        "small": "Маленькая", "medium": "Средняя", "large": "Большая",
+        "jumps": "Запрыгивает на окна", "sleep": "Иногда засыпает",
+        "hide_fullscreen": "Прячется, когда игра или видео на весь экран",
+        "autostart": "Запускать вместе с Windows", "show_widget": "Показывать виджет на рабочем столе",
+        "save": "Сохранить",
+        "m_call": "Позвать сюда", "m_settings": "Настройки...", "m_quit": "Выход",
+        "m_pat": "Погладить", "m_say": "Скажи что-нибудь", "m_rocket": "Полетать на ракете",
+        "m_hide": "Спрятать",
+        "idle": "стоит", "walk": "гуляет", "sit": "сидит", "sleeping": "спит",
+        "fall": "падает!", "jump": "прыгает", "drag": "в руках", "happy": "довольна",
+        "rocket_st": "летит на ракете!", "parachute": "на парашюте",
+        "on_window": "на окне", "sit_window": "сидит на окне",
+    },
+    "en": {
+        "name": "Momo", "title": "Momo settings", "off": "off",
+        "welcome": "Hi! I'm Momo. Let's set me up.",
+        "hint": "You can open these settings again by clicking my face on the widget or by launching the app again.",
+        "language": "Language", "talk": "How often she talks", "rocket": "Rocket flights",
+        "speed": "Walking speed", "size": "Size",
+        "never": "Never", "rare": "Rarely", "sometimes": "Sometimes", "often": "Often",
+        "slow": "Slow", "normal": "Normal", "fast": "Fast",
+        "small": "Small", "medium": "Medium", "large": "Large",
+        "jumps": "Jumps onto windows", "sleep": "Falls asleep sometimes",
+        "hide_fullscreen": "Hides during fullscreen games and videos",
+        "autostart": "Start with Windows", "show_widget": "Show the desktop widget",
+        "save": "Save",
+        "m_call": "Call her here", "m_settings": "Settings...", "m_quit": "Quit",
+        "m_pat": "Pat her", "m_say": "Say something", "m_rocket": "Fly the rocket",
+        "m_hide": "Hide",
+        "idle": "standing", "walk": "walking", "sit": "sitting", "sleeping": "sleeping",
+        "fall": "falling!", "jump": "jumping", "drag": "being carried", "happy": "happy",
+        "rocket_st": "flying a rocket!", "parachute": "parachuting",
+        "on_window": "on a window", "sit_window": "sitting on a window",
+    },
+    "he": {
+        "name": "מומו", "title": "ההגדרות של מומו", "off": "כבויה",
+        "welcome": "היי, אני מומו. בוא נגדיר אותי",
+        "hint": "אפשר לפתוח שוב את ההגדרות בלחיצה על הפנים שלי בווידג׳ט או בהפעלה חוזרת של התוכנה",
+        "language": "שפה", "talk": "כמה היא מדברת", "rocket": "טיסות ברקטה",
+        "speed": "מהירות הליכה", "size": "גודל",
+        "never": "אף פעם", "rare": "נדיר", "sometimes": "לפעמים", "often": "הרבה",
+        "slow": "לאט", "normal": "רגיל", "fast": "מהר",
+        "small": "קטנה", "medium": "בינונית", "large": "גדולה",
+        "jumps": "קופצת על חלונות", "sleep": "נרדמת לפעמים",
+        "hide_fullscreen": "מתחבאת במשחקים ובסרטונים במסך מלא",
+        "autostart": "הפעלה אוטומטית עם המחשב", "show_widget": "הצגת הווידג׳ט על שולחן העבודה",
+        "save": "שמירה",
+        "m_call": "לקרוא לה לכאן", "m_settings": "הגדרות", "m_quit": "יציאה",
+        "m_pat": "ללטף", "m_say": "תגידי משהו", "m_rocket": "לטוס ברקטה",
+        "m_hide": "להסתיר",
+        "idle": "עומדת", "walk": "מטיילת", "sit": "יושבת", "sleeping": "ישנה",
+        "fall": "נופלת", "jump": "קופצת", "drag": "מוחזקת", "happy": "שמחה",
+        "rocket_st": "טסה ברקטה", "parachute": "במצנח",
+        "on_window": "על חלון", "sit_window": "יושבת על חלון",
+    },
+}
+LANGUAGE_NAMES = {"ru": "Русский", "en": "English", "he": "עברית"}
 
 
 def load_config():
@@ -227,6 +318,8 @@ def load_config():
             cfg.update(json.load(f))
     except Exception:
         pass
+    if cfg["language"] not in LANGUAGES:
+        cfg["language"] = system_language()
     return cfg
 
 
@@ -258,11 +351,7 @@ def dpi_factor():
 
 KEY_HEX = "#%02x%02x%02x" % sprites.KEY
 
-STATUS = {
-    "idle": "стоит", "walk": "гуляет", "sit": "сидит", "sleep": "спит",
-    "fall": "падает!", "jump": "прыгает", "drag": "в руках", "happy": "довольна ♥",
-    "rocket": "летит на ракете!", "parachute": "на парашюте",
-}
+STATUS_KEYS = {"sleep": "sleeping", "rocket": "rocket_st"}
 
 
 class FlyingRocket:
@@ -315,15 +404,15 @@ class FlyingRocket:
         self.win.geometry(f"{img.width()}x{img.height()}+{int(self.x)}+{int(self.y)}")
 
 
-PHRASES_PATH = os.path.join(APP_DIR, "phrases.txt")
+PHRASES_DIR = os.path.join(APP_DIR, "phrases")
 HEBREW = re.compile(r"[֐-׿]")
 
 
-def load_phrases():
+def load_phrases(lang):
     groups, cur = {}, "random"
-    path = PHRASES_PATH
+    path = os.path.join(PHRASES_DIR, f"{lang}.txt")
     if not os.path.exists(path):
-        path = os.path.join(BUNDLE_DIR, "phrases.txt")
+        path = os.path.join(BUNDLE_DIR, "phrases", f"{lang}.txt")
     try:
         with open(path, encoding="utf-8") as f:
             for line in f:
@@ -500,7 +589,8 @@ class Bubble:
 
 
 class Pet:
-    def __init__(self, root, size):
+    def __init__(self, root, cfg):
+        self.cfg = cfg
         self.root = root
         self.win = tk.Toplevel(root)
         self.win.withdraw()
@@ -515,14 +605,9 @@ class Pet:
         self.label.bind("<ButtonRelease-1>", self.on_release)
         self.label.bind("<Button-3>", self.on_menu)
 
-        self.menu = tk.Menu(self.win, tearoff=0)
-        self.menu.add_command(label="Погладить ♥", command=self.pet_her)
-        self.menu.add_command(label="Скажи что-нибудь", command=lambda: self.chatter())
-        self.menu.add_command(label="Полетать на ракете", command=self.rocket_now)
-        self.menu.add_command(label="Спрятать", command=lambda: self.on_hide_request())
         self.on_hide_request = lambda: None
 
-        self.set_size(size)
+        self.set_size(cfg["size"])
         self.visible = False
         self.running = False
         self.hidden_for_fullscreen = False
@@ -543,8 +628,7 @@ class Pet:
         self.dragging = False
         self.bubble = Bubble(root)
         self.flyer = FlyingRocket(root)
-        self.talk_timer = random.randint(90, 240)
-        self.rocket_timer = random.randint(450, 700)
+        self.reset_timers()
         self.waypoints = []
         self.air_t = 0
 
@@ -562,9 +646,18 @@ class Pet:
         self.h = sprites.GRID_H * self.scale
         self.body_h = (sprites.GRID_H - sprites.TOP_MARGIN) * self.scale
         self.g = 0.35 * self.scale
-        self.speed = 0.55 * self.scale
         self.frame_key = None
         self.geom = None
+
+    @property
+    def speed(self):
+        return SPEEDS.get(self.cfg["speed"], 0.55) * self.scale
+
+    def reset_timers(self):
+        talk = TALK_TICKS.get(self.cfg["talk"])
+        rocket = ROCKET_TICKS.get(self.cfg["rocket"])
+        self.talk_timer = random.randint(*talk) if talk else float("inf")
+        self.rocket_timer = random.randint(*rocket) if rocket else float("inf")
 
     def hwnd(self):
         return user32.GetParent(self.win.winfo_id())
@@ -592,17 +685,18 @@ class Pet:
         self.flyer.win.withdraw()
 
     def talk(self, group):
-        # re-read every time so edits to phrases.txt apply without a restart
-        options = load_phrases().get(group)
+        # re-read every time so edits to the phrase files apply without a restart
+        options = load_phrases(self.cfg["language"]).get(group)
         if not options or not self.visible:
             return
         right = max((m[2] for m, _ in self.mons), default=1920)
         side = 1 if self.x + 260 * dpi_factor() < right else -1
         self.bubble.say(random.choice(options), side)
-        self.talk_timer = random.randint(240, 600)  # next chatter in ~8-20 s
+        talk = TALK_TICKS.get(self.cfg["talk"])
+        self.talk_timer = random.randint(*talk) if talk else float("inf")
 
     def chatter(self):
-        self.talk("hebrew" if random.random() < 0.65 else "random")
+        self.talk("random")
 
     def spawn(self, x=None):
         mon, work = next(((m, w) for m, w in self.mons if m[0] == 0 and m[1] == 0),
@@ -666,9 +760,9 @@ class Pet:
             self.set_state("walk", random.randint(60, 240))
         elif r < 0.58:
             self.set_state("sit", random.randint(150, 450))
-        elif r < 0.64:
+        elif r < 0.64 and self.cfg["sleep"]:
             self.set_state("sleep", random.randint(300, 800))
-        elif r < 0.80 and self.try_jump():
+        elif r < 0.80 and self.cfg["jumps"] and self.try_jump():
             pass
         else:
             self.set_state("idle", random.randint(40, 120))
@@ -701,9 +795,10 @@ class Pet:
         return True
 
     def status(self):
+        t = UI[self.cfg["language"]]
         if self.state in ("sit", "idle") and self.surface is not None and self.surface.hwnd:
-            return "сидит на окне" if self.state == "sit" else "на окне"
-        return STATUS.get(self.state, "")
+            return t["sit_window"] if self.state == "sit" else t["on_window"]
+        return t.get(STATUS_KEYS.get(self.state, self.state), "")
 
     def pet_her(self):
         if self.surface is None:
@@ -789,7 +884,8 @@ class Pet:
         self.state = "rocket"
         self.air_t = 0
         self.vx, self.vy = 0.0, 0.0
-        self.rocket_timer = random.randint(850, 1000)  # ~30 s on the ground
+        rocket = ROCKET_TICKS.get(self.cfg["rocket"])
+        self.rocket_timer = random.randint(*rocket) if rocket else float("inf")
         if random.random() < 0.8:
             self.talk("rocket")
 
@@ -917,7 +1013,7 @@ class Pet:
             return
         try:
             if self.t % 30 == 0:
-                fs = foreground_is_fullscreen(self.mons)
+                fs = self.cfg["hide_fullscreen"] and foreground_is_fullscreen(self.mons)
                 if fs != self.hidden_for_fullscreen:
                     self.hidden_for_fullscreen = fs
                     if fs:
@@ -975,7 +1071,13 @@ class Pet:
         self.press_pos = None
 
     def on_menu(self, e):
-        self.menu.tk_popup(e.x_root, e.y_root)
+        t = UI[self.cfg["language"]]
+        menu = tk.Menu(self.win, tearoff=0)
+        menu.add_command(label=t["m_pat"], command=self.pet_her)
+        menu.add_command(label=t["m_say"], command=self.chatter)
+        menu.add_command(label=t["m_rocket"], command=self.rocket_now)
+        menu.add_command(label=t["m_hide"], command=lambda: self.on_hide_request())
+        menu.tk_popup(e.x_root, e.y_root)
 
 
 # --------------------------------------------------------------- widget ---
@@ -1023,20 +1125,6 @@ class Widget:
         self.press = None
         self.moved = False
 
-        self.autostart_var = tk.BooleanVar(value=autostart_enabled())
-        self.size_var = tk.DoubleVar(value=cfg["size"])
-        self.menu = tk.Menu(root, tearoff=0)
-        self.menu.add_command(label="Позвать сюда", command=app.call_here)
-        sizes = tk.Menu(self.menu, tearoff=0)
-        for label, val in (("Маленькая", 1.6), ("Средняя", 2.4), ("Большая", 3.2)):
-            sizes.add_radiobutton(label=label, value=val, variable=self.size_var,
-                                  command=lambda: app.set_size(self.size_var.get()))
-        self.menu.add_cascade(label="Размер", menu=sizes)
-        self.menu.add_checkbutton(label="Запускать с Windows", variable=self.autostart_var,
-                                  command=lambda: set_autostart(self.autostart_var.get()))
-        self.menu.add_separator()
-        self.menu.add_command(label="Выход", command=app.quit)
-
         root.update_idletasks()
         self.hwnd = user32.GetParent(root.winfo_id())
         set_ex_style(self.hwnd, WS_EX_TOOLWINDOW)
@@ -1050,7 +1138,11 @@ class Widget:
 
     def watch(self):
         # Survive "Show desktop" (Win+D): bring ourselves back if minimised.
-        if user32.IsIconic(self.hwnd) or not user32.IsWindowVisible(self.hwnd):
+        if not self.app.cfg["show_widget"]:
+            if user32.IsWindowVisible(self.hwnd):
+                self.root.withdraw()
+        elif user32.IsIconic(self.hwnd) or not user32.IsWindowVisible(self.hwnd):
+            self.root.deiconify()
             user32.ShowWindow(self.hwnd, SW_SHOWNOACTIVATE)
             self.send_to_bottom()
         self.draw()
@@ -1064,6 +1156,7 @@ class Widget:
 
     def draw(self):
         on = self.app.cfg["pet_on"]
+        t = UI[self.app.cfg["language"]]
         u, W, H = self.u, self.W, self.H
         accent = self.ON if on else self.OFF
         self.c.delete("all")
@@ -1071,9 +1164,9 @@ class Widget:
         self.pixel_box(u, u, W - u, H - u, self.BG)
         self.c.create_image(u * 3, H // 2, image=self.faces["on" if on else "off"], anchor="w")
         tx = u * 42
-        self.c.create_text(tx, u * 10, text=PET_NAME, anchor="w", fill="white",
+        self.c.create_text(tx, u * 10, text=t["name"], anchor="w", fill="white",
                            font=("Segoe UI", 10, "bold"))
-        status = self.app.pet.status() if on else "выключена"
+        status = self.app.pet.status() if on else t["off"]
         self.c.create_text(tx, u * 20, text=status, anchor="w", fill=accent,
                            font=("Segoe UI", 8))
         # toggle switch
@@ -1101,14 +1194,164 @@ class Widget:
             self.app.cfg["widget_x"] = self.root.winfo_x()
             self.app.cfg["widget_y"] = self.root.winfo_y()
             save_config(self.app.cfg)
+        elif e.x < self.u * 40:  # her face opens the settings
+            self.app.open_settings()
         else:
             self.app.toggle()
         self.press = None
         self.send_to_bottom()
 
     def on_menu(self, e):
-        self.autostart_var.set(autostart_enabled())
-        self.menu.tk_popup(e.x_root, e.y_root)
+        t = UI[self.app.cfg["language"]]
+        menu = tk.Menu(self.root, tearoff=0)
+        menu.add_command(label=t["m_settings"], command=self.app.open_settings)
+        menu.add_command(label=t["m_call"], command=self.app.call_here)
+        menu.add_separator()
+        menu.add_command(label=t["m_quit"], command=self.app.quit)
+        menu.tk_popup(e.x_root, e.y_root)
+
+
+# ------------------------------------------------------------- settings ---
+
+class Settings:
+    BG = "#241b35"
+    CARD = "#34284d"
+    ACCENT = "#f07cb5"
+    TEXT = "#ffffff"
+    MUTED = "#b9a8d6"
+
+    CHOICES = [
+        ("language", LANGUAGES),
+        ("talk", ("never", "rare", "sometimes", "often")),
+        ("rocket", ("never", "rare", "sometimes", "often")),
+        ("speed", ("slow", "normal", "fast")),
+        ("size", ("small", "medium", "large")),
+    ]
+    TOGGLES = ("jumps", "sleep", "hide_fullscreen", "autostart", "show_widget")
+
+    def __init__(self, app):
+        self.app = app
+        cfg = app.cfg
+        self.first_run = not cfg["setup_done"]
+        self.values = {k: cfg[k] for k in ("language", "talk", "rocket", "speed", "jumps",
+                                            "sleep", "hide_fullscreen", "show_widget")}
+        self.values["size"] = min(SIZES, key=lambda k: abs(SIZES[k] - cfg["size"]))
+        self.values["autostart"] = autostart_enabled()
+
+        f = dpi_factor()
+        self.f = f
+        self.win = tk.Toplevel(app.root)
+        self.win.configure(bg=self.BG)
+        self.win.resizable(False, False)
+        self.win.protocol("WM_DELETE_WINDOW", self.close)
+
+        s = max(2, round(3 * f))
+        img = sprites.frames(s)["happy2"]
+        box = (sprites.SIDE_MARGIN * s - s, sprites.TOP_MARGIN * s - s,
+               (sprites.SIDE_MARGIN + sprites.W) * s + s, (sprites.TOP_MARGIN + sprites.HEAD_ROWS) * s)
+        face = img.crop(box).convert("RGB")
+        bg = tuple(int(self.BG[i:i + 2], 16) for i in (1, 3, 5))
+        face.putdata([bg if p == sprites.KEY else p for p in face.getdata()])
+        self.face = ImageTk.PhotoImage(face)
+
+        self.build()
+        self.win.update_idletasks()
+        w, h = self.win.winfo_reqwidth(), self.win.winfo_reqheight()
+        work = next((wk for m, wk in monitors() if m[0] == 0 and m[1] == 0), None)
+        left, top, right, bottom = work or (0, 0, self.win.winfo_screenwidth(),
+                                            self.win.winfo_screenheight())
+        x = left + (right - left - w) // 2
+        y = max(top + 10, top + (bottom - top - h) // 2 - round(30 * self.f))  # title bar
+        self.win.geometry(f"+{x}+{y}")
+        self.win.lift()
+        self.win.attributes("-topmost", True)
+        self.win.after(300, lambda: self.win.attributes("-topmost", False))
+        self.win.focus_force()
+
+    def font(self, size, bold=False):
+        return ("Segoe UI", size, "bold") if bold else ("Segoe UI", size)
+
+    def build(self):
+        for child in self.win.winfo_children():
+            child.destroy()
+        t = UI[self.values["language"]]
+        self.win.title(t["title"])
+        pad = round(14 * self.f)
+        body = tk.Frame(self.win, bg=self.BG, padx=pad, pady=pad)
+        body.pack(fill="both")
+
+        head = tk.Frame(body, bg=self.BG)
+        head.pack(fill="x", pady=(0, pad // 2))
+        tk.Label(head, image=self.face, bg=self.BG).pack(side="left")
+        text = tk.Frame(head, bg=self.BG)
+        text.pack(side="left", padx=(pad // 2, 0))
+        tk.Label(text, text=t["title"], font=self.font(15, True), fg=self.TEXT,
+                 bg=self.BG).pack(anchor="w")
+        if self.first_run:
+            tk.Label(text, text=t["welcome"], font=self.font(10), fg=self.MUTED,
+                     bg=self.BG).pack(anchor="w")
+
+        for key, options in self.CHOICES:
+            tk.Label(body, text=t[key], font=self.font(9, True), fg=self.TEXT,
+                     bg=self.BG).pack(anchor="w", pady=(pad // 3, 2))
+            row = tk.Frame(body, bg=self.BG)
+            row.pack(anchor="w")
+            for opt in options:
+                label = LANGUAGE_NAMES[opt] if key == "language" else t[opt]
+                selected = self.values[key] == opt
+                b = tk.Label(row, text=label, font=self.font(9, selected),
+                             fg="#241b35" if selected else self.TEXT,
+                             bg=self.ACCENT if selected else self.CARD,
+                             padx=round(10 * self.f), pady=round(3 * self.f), cursor="hand2")
+                b.pack(side="left", padx=(0, 4))
+                b.bind("<Button-1>", lambda e, k=key, o=opt: self.pick(k, o))
+
+        tk.Frame(body, bg=self.BG, height=pad // 2).pack()
+        for key in self.TOGGLES:
+            row = tk.Frame(body, bg=self.BG, cursor="hand2")
+            row.pack(anchor="w", fill="x", pady=1)
+            on = self.values[key]
+            sw = tk.Canvas(row, width=round(30 * self.f), height=round(16 * self.f),
+                           bg=self.BG, highlightthickness=0, cursor="hand2")
+            self.draw_switch(sw, on)
+            sw.pack(side="left")
+            lbl = tk.Label(row, text=t[key], font=self.font(9), fg=self.TEXT,
+                           bg=self.BG, cursor="hand2")
+            lbl.pack(side="left", padx=(8, 0))
+            for w in (row, sw, lbl):
+                w.bind("<Button-1>", lambda e, k=key: self.pick(k, not self.values[k]))
+
+        tk.Label(body, text=t["hint"], font=self.font(8), fg=self.MUTED, bg=self.BG,
+                 wraplength=round(360 * self.f), justify="left").pack(anchor="w", pady=(pad // 2, pad // 2))
+        save = tk.Label(body, text=t["save"], font=self.font(10, True), fg="#241b35",
+                        bg=self.ACCENT, padx=round(24 * self.f), pady=round(5 * self.f), cursor="hand2")
+        save.pack(anchor="e")
+        save.bind("<Button-1>", lambda e: self.save())
+
+    def draw_switch(self, c, on):
+        w, h = int(c["width"]), int(c["height"])
+        r = h // 2
+        color = self.ACCENT if on else "#5b4f73"
+        c.create_oval(0, 0, h, h, fill=color, width=0)
+        c.create_oval(w - h, 0, w, h, fill=color, width=0)
+        c.create_rectangle(r, 0, w - r, h, fill=color, width=0)
+        k = h - 6
+        kx = w - k - 3 if on else 3
+        c.create_oval(kx, 3, kx + k, 3 + k, fill="white", width=0)
+
+    def pick(self, key, value):
+        self.values[key] = value
+        self.build()
+
+    def save(self):
+        self.app.apply_settings(self.values)
+        self.close()
+
+    def close(self):
+        self.app.cfg["setup_done"] = True
+        save_config(self.app.cfg)
+        self.app.settings = None
+        self.win.destroy()
 
 
 # ----------------------------------------------------- autostart / links ---
@@ -1153,14 +1396,19 @@ def set_autostart(on):
 
 
 def ensure_phrases():
-    """First run of the .exe: put an editable copy of phrases.txt next to it."""
-    bundled = os.path.join(BUNDLE_DIR, "phrases.txt")
-    if not os.path.exists(PHRASES_PATH) and os.path.exists(bundled):
-        import shutil
-        try:
-            shutil.copyfile(bundled, PHRASES_PATH)
-        except OSError:
-            log_error()
+    """First run of the .exe: put editable copies of the phrase files next to it."""
+    if not FROZEN:
+        return
+    import shutil
+    try:
+        os.makedirs(PHRASES_DIR, exist_ok=True)
+        for lang in LANGUAGES:
+            dst = os.path.join(PHRASES_DIR, f"{lang}.txt")
+            src = os.path.join(BUNDLE_DIR, "phrases", f"{lang}.txt")
+            if not os.path.exists(dst) and os.path.exists(src):
+                shutil.copyfile(src, dst)
+    except OSError:
+        log_error()
 
 
 def ensure_icon():
@@ -1190,13 +1438,50 @@ class App:
     def __init__(self):
         self.cfg = load_config()
         self.root = tk.Tk()
-        self.root.title("PixelPet")
-        self.pet = Pet(self.root, self.cfg["size"])
+        self.root.title("Momo")
+        icon = ICON_PATH if os.path.exists(ICON_PATH) else os.path.join(BUNDLE_DIR, "icon.ico")
+        try:
+            self.root.iconbitmap(default=icon)
+        except tk.TclError:
+            pass
+        self.settings = None
+        self.pet = Pet(self.root, self.cfg)
         self.pet.on_hide_request = self.turn_off
         self.widget = Widget(self.root, self)
         if self.cfg["pet_on"]:
             self.pet.show()
         self.start_ipc()
+        if not self.cfg["setup_done"]:
+            self.root.after(600, self.open_settings)
+
+    def open_settings(self):
+        if self.settings is not None:
+            self.settings.win.deiconify()
+            self.settings.win.lift()
+            self.settings.win.focus_force()
+            return
+        self.settings = Settings(self)
+
+    def apply_settings(self, values):
+        cfg = self.cfg
+        for key in ("language", "talk", "rocket", "speed", "jumps", "sleep",
+                    "hide_fullscreen", "show_widget"):
+            cfg[key] = values[key]
+        size = SIZES[values["size"]]
+        if size != cfg["size"]:
+            cfg["size"] = size
+            self.pet.set_size(size)
+        if values["autostart"] != autostart_enabled():
+            set_autostart(values["autostart"])
+        cfg["setup_done"] = True
+        save_config(cfg)
+        self.pet.reset_timers()
+        if cfg["show_widget"]:
+            self.root.deiconify()
+            self.widget.send_to_bottom()
+        else:
+            self.root.withdraw()
+        self.widget.draw()
 
     def toggle(self):
         (self.turn_off if self.cfg["pet_on"] else self.turn_on)()
@@ -1250,6 +1535,8 @@ class App:
             self.toggle()
         elif msg == "quit":
             self.quit()
+        elif msg == "settings":
+            self.open_settings()
         elif msg == "say":
             self.pet.chatter()
         elif msg == "rocket":
@@ -1290,7 +1577,8 @@ def main():
         ensure_icon()
         set_autostart(True)
         return
-    msg = "quit" if "--quit" in args else "toggle"
+    # launching again while running opens the settings (the desktop icon does this)
+    msg = "quit" if "--quit" in args else "toggle" if "--toggle" in args else "settings"
     if send_to_running(msg):
         return
     if msg == "quit":
